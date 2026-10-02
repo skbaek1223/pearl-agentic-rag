@@ -1,0 +1,20 @@
+CUSTOM_USER_PROMPT = 'The assistant starts with one or more cycles of (thinking about which tool to use -> performing tool call -> waiting for tool response), and ends with (thinking about the answer -> answer of the question). The thinking processes, tool calls, tool responses, and answer are enclosed within their tags. There could be multiple thinking processes, tool calls, tool call parameters and tool response parameters.\n\nExample response:\n<think> thinking process here </think>\n<tool_call>\n{"name": "tool name here", "arguments": {"parameter name here": parameter value here, "another parameter name here": another parameter value here, ...}}\n</tool_call>\n<tool_response>\ntool_response here\n</tool_response>\n<think> thinking process here </think>\n<tool_call>\n{"name": "another tool name here", "arguments": {...}}\n</tool_call>\n<tool_response>\ntool_response here\n</tool_response>\n(more thinking processes, tool calls and tool responses here)\n<think> thinking process here </think>\n<answer> answer here </answer>\n\nUser: '
+
+EXTRACTOR_PROMPT = 'Please process the following webpage content and user goal to extract relevant information:\n\n## **Webpage Content** \n{webpage_content}\n\n## **User Goal**\n{goal}\n\n## **Task Guidelines**\n1. **Content Scanning**: Locate the **specific sections/data** directly related to the user\'s goal within the webpage content.\n2. **Key Extraction**: Identify and extract the **most relevant information** from the content, you never miss any important information\n3. **Summary Output**: Organize into a concise paragraph with logical flow, prioritizing clarity and judge the contribution of the information to the goal.\n\n\n**Final Output Format using JSON format**:\n{{\n  "rational": "string",\n  "evidence": "string",\n  "summary": "string",\n}}\n'
+
+SEARCH_SCHEMA = {'name': 'search', 'description': "Performs batched web searches: supply an array 'query'; the tool retrieves the top 10 results for each query in one call.", 'parameters': {'type': 'object', 'properties': {'query': {'type': 'array', 'items': {'type': 'string'}, 'description': 'Array of query strings. Include multiple complementary search queries in a single call.'}}, 'required': ['query']}}
+
+VISIT_SCHEMA = {'name': 'visit', 'description': 'Visit webpage(s) and return the summary of the content.', 'parameters': {'type': 'object', 'properties': {'url': {'type': ['string', 'array'], 'items': {'type': 'string'}, 'minItems': 1, 'description': 'The URL(s) of the webpage(s) to visit. Can be a single URL or an array of URLs.'}, 'goal': {'type': 'string', 'description': 'The goal of the visit for webpage(s).'}}, 'required': ['url', 'goal']}}
+
+
+def make_system_prompt() -> str:
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc) + timedelta(hours=8)
+    date = f"{now.year:04d}-{now.month:02d}-{now.day:02d} {now.strftime('%A')}"
+    return ("You are a Web Information Seeking Master. Your task is to thoroughly seek the internet for information and provide accurate answers to questions."
+            "And you are also a Location-Based Services (LBS) assistant designed to help users find location-specific information."
+            "No matter how complex the query, you will not give up until you find the corresponding information.\n\nAs you proceed, adhere to the following principles:\n\n"
+            "1. **Persistent Actions for Answers**: You will engage in many interactions, delving deeply into the topic to explore all possible aspects until a satisfactory answer is found.\n\n"
+            "2. **Repeated Verification**: Before presenting a Final Answer, you will **cross-check** and **validate the information** you've gathered to confirm its accuracy and reliability.\n\n"
+            "3. **Attention to Detail**: You will carefully analyze each information source to ensure that all data is current, relevant, and from credible origins.\n\n"
+            f"Please note that the current datetime is [{date}]. When responding, consider the time to provide contextually relevant information.")

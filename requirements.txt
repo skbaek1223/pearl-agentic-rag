@@ -1,0 +1,24 @@
+torch
+transformers
+peft
+trl
+bitsandbytes
+accelerate
+datasets
+vllm
+fastapi
+uvicorn
+pydantic
+requests
+numpy
+scikit-learn
+spacy
+
+# Dense retriever server (search_o1_baselines/retriever_server.py) depends on
+# FlashRAG's retriever implementation, which is not on PyPI under this name --
+# install from source: https://github.com/RUC-NLPIR/FlashRAG
+# flashrag-dev @ git+https://github.com/RUC-NLPIR/FlashRAG.git
+
+# spaCy's English pipeline model, used by run_agentic_rag.py's verb-stripping
+# for the forced first search query. Install separately:
+#   python -m spacy download en_core_web_sm
