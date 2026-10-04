@@ -63,8 +63,9 @@ Core PEARL pipeline (repo root):
 project was forked from):
 - `run_search_o1_wiki.py`, `run_search_o1_wiki_nowait.py`,
   `run_search_o1_wiki_deer.py` — Search-o1 / NoWait / DEER baselines
-- `evaluate.py` — EM/Acc/F1 scoring and the 5-gram repetition / normalized
-  lexical entropy ("rumination") metrics reported in the paper
+- `evaluate.py` — answer accuracy (Acc, normalized answer containment) and the
+  5-gram repetition / normalized lexical entropy ("rumination") metrics
+  reported in the paper
 - `retriever_server.py`, `retriever_utils.py` — dense retriever (E5-base-v2
   over Wikipedia-2018) serving code
 - `prompts.py` — base Search-o1-family prompts

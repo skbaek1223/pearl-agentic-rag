@@ -4,7 +4,6 @@ import argparse
 import glob
 import json
 import os
-from collections import Counter
 
 
 def load_result(pattern: str):
@@ -54,8 +53,6 @@ def main():
                      help="cache/plans_{dataset}_{plan_version}.json -- for planner token stats.")
     ap.add_argument("--base_model", default="Qwen/Qwen3-8B")
     ap.add_argument("--out_dir", default="final_results")
-    ap.add_argument("--llm_judge_summary", default=None,
-                     help='Optional summary from llm_judge_grade.py; adds LLM-judge accuracy to accuracy_metrics.')
     args = ap.parse_args()
 
     retry_dirs = args.retry_dirs or ["none"] * len(args.shard_dirs)
@@ -114,15 +111,11 @@ def main():
     merged_all.sort(key=lambda it: int(it["id"].split("_")[-1]))
 
     n = len(merged_all)
-    valid = [it for it in merged_all if it["Metrics"]["is_valid_answer"]]
     acc = sum(it["Metrics"]["acc"] for it in merged_all) / n
-    em = sum(it["Metrics"]["em"] for it in merged_all) / n
-    f1 = sum(it["Metrics"]["f1"] for it in merged_all) / n
     rum_rep = sum(it["Rumination"]["rumination_5gram_rep"] for it in merged_all) / n
     rum_ent = sum(it["Rumination"]["rumination_lex_entropy"] for it in merged_all) / n
 
     search_counts = [t["search_count"] for t in merged_traj.values() if t]
-    finish_reasons = Counter(t["finish_reason"] for t in merged_traj.values() if t)
     if search_counts:
         avg_search_count = sum(search_counts) / len(search_counts)
     else:
@@ -162,23 +155,7 @@ def main():
 
     total_tokens_avg = agent_prompt + agent_gen + extr_total + planner_prompt_avg + planner_comp_avg
 
-    accuracy_metrics = {"acc": acc, "em": em, "f1": f1}
-    if args.llm_judge_summary:
-        judge = json.load(open(args.llm_judge_summary))
-        judge_by_id = {g["id"]: g for g in judge["per_item"]}
-        for it in merged_all:
-            g = judge_by_id.get(it["id"])
-            if g:
-                it["LLM_Judge"] = g
-        matched = [judge_by_id[it["id"]] for it in merged_all if it["id"] in judge_by_id]
-        n_judged = len(matched)
-        n_judge_correct = sum(1 for g in matched if g["correct"])
-        accuracy_metrics["llm_judge_accuracy"] = n_judge_correct / n_judged if n_judged else None
-        accuracy_metrics["llm_judge_n_correct"] = n_judge_correct
-        accuracy_metrics["llm_judge_n_total"] = n_judged
-        accuracy_metrics["llm_judge_model"] = judge.get("judge_model")
-        if n_judged < n:
-            print(f"[warn] llm_judge_summary only covers {n_judged}/{n} merged items")
+    accuracy_metrics = {"acc": acc}
 
     os.makedirs(args.out_dir, exist_ok=True)
     final_path = f"{args.out_dir}/{args.dataset}_{args.plan_version}_final.json"
@@ -191,13 +168,10 @@ def main():
         "plan_version": args.plan_version,
         "max_turn": args.max_turn,
         "n_total": n,
-        "n_valid_answer": len(valid),
-        "valid_answer_rate": len(valid) / n,
         "accuracy_metrics": accuracy_metrics,
         "quality_metrics": {"rumination_5gram_rep": rum_rep, "rumination_lex_entropy": rum_ent},
         "efficiency_metrics": {
             "avg_search_count_per_question": avg_search_count,
-            "finish_reason_distribution": dict(finish_reasons),
             "total_retrieval_queries_issued": stats_totals["retrieval_queries_issued"],
             "total_turns": stats_totals["n_turns_total"],
             "avg_latency_ms_per_question": round(latency_weighted_sum / n, 1),
