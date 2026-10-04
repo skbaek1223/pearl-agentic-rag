@@ -92,15 +92,33 @@ def _strip_non_model_segments(text):
     return text
 
 
-_THINK_RE = re.compile(r'<think>(.*?)</think>', re.DOTALL | re.IGNORECASE)
 _WORD_RE = re.compile(r"\w+", re.UNICODE)
+_SEARCH_QUERY_RE = re.compile(r'<\|begin_search_query\|>.*?<\|end_search_query\|>', re.DOTALL)
+# Evaluator guide messages exactly as injected by run_agentic_rag.py
+# (eval_guide_text); only the embedded question varies. The Insufficient
+# template ends with "{question}." at the end of its line, so the question is
+# matched to the line end rather than to its first period.
+_GUIDE_SUFFICIENT_RE = re.compile(
+    r'\[Reasoning Guide\]: Sufficient\.\n'
+    r'1\) If there is still more information to retrieve before fully answering the original question ".*?", '
+    r'derive an intermediate answer based on the retrieved information, then continue reasoning toward the next retrieval\. '
+    r'You may refer to the reasoning context above or the retrieval guide to inform your search strategy, '
+    r'or feel free to take a different approach\.\n'
+    r'2\) If you have sufficient information to fully answer the original question, '
+    r'provide the final answer in the format \\boxed\{YOUR_ANSWER\}\.\n?', re.DOTALL)
+_GUIDE_INSUFFICIENT_RE = re.compile(
+    r'\[Reasoning Guide\]: Insufficient\.\n'
+    r'Feel free to explore alternative paths, such as trying a different search query or taking other retrieval steps as needed, '
+    r'to derive an answer to the question: [^\n]*\.\n?')
 
 
 def _extract_reasoning_chain(text):
-    text = _strip_non_model_segments(text)
-    matches = _THINK_RE.findall(text)
-    if matches:
-        return "\n".join(matches)
+    """Agent-written text used for Rep5/Ent: drop retrieved evidence, injected
+    evaluator guides, and search queries."""
+    text = _SEARCH_RESULT_RE.sub('', text)
+    text = _GUIDE_SUFFICIENT_RE.sub('', text)
+    text = _GUIDE_INSUFFICIENT_RE.sub('', text)
+    text = _SEARCH_QUERY_RE.sub('', text)
     return text
 
 
