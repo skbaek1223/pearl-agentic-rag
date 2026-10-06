@@ -117,11 +117,17 @@ API keys (OpenAI, etc., where applicable to data-prep scripts) are read via
 
 ## What is not reproduced here
 
-Per the paper (Appendix "Prompts"), the offline GPT-5 prompt used to generate
-the planner's teacher training plans is a separate component and is not
-reproduced in this repository. `precompute_plans.py` and `planner_infer.py`
-only *consume* an already-trained planner adapter; they make no GPT-5/OpenAI
-calls.
+The GPT-5 teacher prompt used to generate the planner's training plans is
+given in the paper (Appendix "Planner Teacher Prompt") and in
+`planner_teacher_prompt.py`, which builds the exact request (system prompt,
+few-shot demonstrations, user-message format, JSON schema, and call settings)
+for NQ and HotpotQA questions. OpenAI models were called by their aliases
+`gpt-5`, `gpt-5-mini`, and `gpt-5-nano`; retained API responses identify the
+snapshots `gpt-5-2025-08-07` and `gpt-5-nano-2025-08-07` (GPT-5-mini responses
+did not record a snapshot). The hard-question selection, teacher-plan
+generation, and GPT-5-mini filtering pipeline itself is not included.
+`precompute_plans.py` and `planner_infer.py` only *consume* an already-trained
+planner adapter; they make no GPT-5/OpenAI calls.
 
 ## Setup
 
@@ -139,8 +145,8 @@ You will additionally need:
    checkpoints — build these with `train_hop_router_lora.py` and the
    `search_o1_baselines/` evaluator-training pipeline (planner training code
    itself follows the same QLoRA recipe described in the paper's Appendix
-   "Planner Training"; the teacher-plan generation step is external, see
-   above).
+   "Planner Training"; the teacher prompt is in `planner_teacher_prompt.py`,
+   see above).
 4. For the WebDancer baseline (`run_webdancer.py`/`run_webdancer_wiki.py`): a
    local WebDancer-32B checkpoint and an e5-base-v2 checkpoint
    (`PEARL_WEBDANCER_MODEL_PATH`/`PEARL_E5_MODEL_PATH`). `run_webdancer.py`

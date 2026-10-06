@@ -59,7 +59,6 @@ def normalize_answer_qa(s):
 
 
 def evaluate_predictions(output, labeled_answer, mode='gen'):
-    """Acc: 1 if a normalized gold answer is contained in the normalized prediction."""
     final_metric = {"acc": 0}
     pred_answer = extract_answer(output, mode=mode)
 
@@ -67,8 +66,6 @@ def evaluate_predictions(output, labeled_answer, mode='gen'):
         normalized_pred_answer = normalize_answer_qa(pred_answer)
         for answer in labeled_answer:
             normalized_ground_truth = normalize_answer_qa(answer)
-            # Count containment only when at least one word token is shared,
-            # so a gold string matching inside another word does not score.
             shared = Counter(normalized_pred_answer.split()) & Counter(normalized_ground_truth.split())
             if sum(shared.values()) > 0 and normalized_ground_truth in normalized_pred_answer:
                 final_metric["acc"] = 1
@@ -94,10 +91,6 @@ def _strip_non_model_segments(text):
 
 _WORD_RE = re.compile(r"\w+", re.UNICODE)
 _SEARCH_QUERY_RE = re.compile(r'<\|begin_search_query\|>.*?<\|end_search_query\|>', re.DOTALL)
-# Evaluator guide messages exactly as injected by run_agentic_rag.py
-# (eval_guide_text); only the embedded question varies. The Insufficient
-# template ends with "{question}." at the end of its line, so the question is
-# matched to the line end rather than to its first period.
 _GUIDE_SUFFICIENT_RE = re.compile(
     r'\[Reasoning Guide\]: Sufficient\.\n'
     r'1\) If there is still more information to retrieve before fully answering the original question ".*?", '
@@ -113,8 +106,6 @@ _GUIDE_INSUFFICIENT_RE = re.compile(
 
 
 def _extract_reasoning_chain(text):
-    """Agent-written text used for Rep5/Ent: drop retrieved evidence, injected
-    evaluator guides, and search queries."""
     text = _SEARCH_RESULT_RE.sub('', text)
     text = _GUIDE_SUFFICIENT_RE.sub('', text)
     text = _GUIDE_INSUFFICIENT_RE.sub('', text)
@@ -189,7 +180,6 @@ def _gold_answers(item):
 
 
 def _score_items(data, dataset_name):
-    """Score each item in place (Pred_Answer, Metrics, Rumination); return mean Acc and rumination."""
     if dataset_name not in QA_DATASETS:
         raise ValueError(f"Unsupported dataset: {dataset_name} (open-domain QA only: {QA_DATASETS})")
     accs, rum_list = [], []
