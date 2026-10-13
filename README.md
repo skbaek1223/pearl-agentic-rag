@@ -164,7 +164,7 @@ python search_o1_baselines/retriever_server.py --gpus 0,1 --port 8765
 python run_agentic_rag.py --dataset_name hotpotqa \
     --qa_data_path /path/to/hotpotqa_test.json \
     --retriever_url http://127.0.0.1:8765 \
-    --use_hop_router --subset_num 1000
+    --use_hop_router --hop_router_skip_single_planner --subset_num 1000
 ```
 
 See each script's `--help` / module docstring for the full set of ablation
