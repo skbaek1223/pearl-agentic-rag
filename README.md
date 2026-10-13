@@ -1,9 +1,9 @@
-# PEARL: Planning and Evidence-Aware Guidance for Reasoning-Efficient Agentic RAG
+# PEARL: Planning and Evidence-Aware Guidance for Reasoning-Efficient Agentic RAG with Large Reasoning Models
 
 This repository contains the reproducibility code for **PEARL**, an inference-time
 framework that guides a large reasoning model (LRM) through an agentic
 retrieval-augmented generation (RAG) loop using hop-aware retrieval planning
-and an evidence-sufficiency evaluator, plus the baseline and evaluation code
+and evidence-aware guidance, plus the baseline and evaluation code
 needed to reproduce the paper's experiments.
 
 This is a code-availability release for double-blind review. Trained
@@ -18,7 +18,7 @@ Core PEARL pipeline (repo root):
   (`--use_hop_router`, `--no_planner`, `--no_evaluator`,
   `--forced_search_question_only`, etc.)
 - `run_agentic_rag_fsq_noeval.py` — narrow fork used to regenerate part of the
-  "w/o Evaluator" ablation for single-routed questions
+  "w/o Guided Reasoning" ablation for single-routed questions
 - `planner_infer.py` — planner + hop-router inference (Qwen3-8B + LoRA).
   `route_and_generate_plans()` (the `--use_hop_router` path) shells out to
   `planner_vllm_worker.py` for the actual hop-classification + plan-generation
