@@ -1,4 +1,4 @@
-# PEARL: Planner and Evaluator for Reasoning-Efficient Agentic RAG
+# PEARL: Planning and Evidence-Aware Guidance for Reasoning-Efficient Agentic RAG
 
 This repository contains the reproducibility code for **PEARL**, an inference-time
 framework that guides a large reasoning model (LRM) through an agentic
