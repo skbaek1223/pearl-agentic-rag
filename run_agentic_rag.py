@@ -452,7 +452,12 @@ def main():
         print(f"[planner] loading adapter {args.planner_adapter_dir} on base {args.planner_base_model} "
               f"(hop-router mode: classify then route per question"
               + (", single-hop skips planner entirely)..." if args.hop_router_skip_single_planner else ")..."))
-        planner = Planner(args.planner_adapter_dir, args.planner_base_model)
+        # Keep the planner/router on a single GPU: with device_map="auto" the model is
+        # split across all visible GPUs, and on hosts with broken GPU peer-to-peer the
+        # inter-GPU activation copies are silently corrupted (the hop router then
+        # routes every question to single-hop). Qwen3-8B fits on one GPU and is freed
+        # before the reasoning model loads.
+        planner = Planner(args.planner_adapter_dir, args.planner_base_model, device_map={"": 0})
         plans, hop_labels = planner.route_and_generate_plans(
             planner_questions, dataset_name=args.dataset_name,
             skip_planner_for_single=args.hop_router_skip_single_planner)
@@ -474,7 +479,12 @@ def main():
         torch.cuda.empty_cache()
     else:
         print(f"[planner] loading adapter {args.planner_adapter_dir} on base {args.planner_base_model}...")
-        planner = Planner(args.planner_adapter_dir, args.planner_base_model)
+        # Keep the planner/router on a single GPU: with device_map="auto" the model is
+        # split across all visible GPUs, and on hosts with broken GPU peer-to-peer the
+        # inter-GPU activation copies are silently corrupted (the hop router then
+        # routes every question to single-hop). Qwen3-8B fits on one GPU and is freed
+        # before the reasoning model loads.
+        planner = Planner(args.planner_adapter_dir, args.planner_base_model, device_map={"": 0})
         plans = planner.generate_plans(planner_questions, is_multi_hop=is_multi_hop, dataset_name=args.dataset_name)
         per_item_is_multi_hop = [is_multi_hop] * len(questions)
         per_item_planner_skipped = [False] * len(questions)
