@@ -110,16 +110,13 @@ Rules:
 2. Focus only on the information need implied by the recent reasoning, not the whole question.
 3. Output <answer> sufficient </answer> only if the search result provides enough explicit information to satisfy that information need without additional search.
 4. Output <answer> insufficient </answer> if the search result is incomplete, ambiguous, indirect, weakly relevant, or missing key information needed to satisfy that information need.
-5. After that, output a confidence score from 0% to 100% indicating how confident you are in your sufficient/insufficient decision based only on the given search result.
 
 Output format:
 <answer> sufficient </answer>
-<confidence> 90% </confidence>
 
 or
 
 <answer> insufficient </answer>
-<confidence> 85% </confidence>
 
 Do not output any explanation, reasoning, or extra text.
 
