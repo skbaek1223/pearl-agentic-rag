@@ -61,18 +61,6 @@ MULTIHOP_FEWSHOT: list[dict[str, str]] = [
     },
 ]
 
-MULTIHOP_MIXED_FEWSHOT: list[dict[str, str]] = [
-    MULTIHOP_FEWSHOT[0],
-    {
-        "q": "In which city were the Winter Olympic Games held when John Curry won a gold medal for men's figure skating?",
-        "plan": (
-            "1. Find the year John Curry won the Olympic gold medal in men's figure skating\n"
-            "2. Find the host city of the Winter Olympic Games held in that year"
-        ),
-    },
-    MULTIHOP_FEWSHOT[1],
-]
-
 
 HOP_ROUTER_LORA_DIR = os.environ.get(
     "PEARL_HOP_ROUTER_ADAPTER_DIR",
@@ -163,7 +151,7 @@ class Planner:
         total_completion_tokens = 0
         pad_id = self.tokenizer.pad_token_id
         if is_multi_hop:
-            fewshot = MULTIHOP_MIXED_FEWSHOT if self._has_adapter else MULTIHOP_FEWSHOT
+            fewshot = MULTIHOP_FEWSHOT
         else:
             fewshot = FEWSHOT
         system_prompt = MULTIHOP_SYSTEM_PROMPT if is_multi_hop else SYSTEM_PROMPT

@@ -158,6 +158,22 @@ def truncate_after_boxed(text: str) -> str:
     return text
 
 
+def dedup_sentences(text: str) -> str:
+    """Drop repeated sentences from an extraction (exact match after whitespace
+    normalization), keeping the first occurrence and the original order."""
+    parts = re.split(r"(?<=[.!?])\s+", text.strip())
+    seen, kept = set(), []
+    for part in parts:
+        key = " ".join(part.split())
+        if key and key in seen:
+            continue
+        seen.add(key)
+        kept.append(part.strip())
+    if len(kept) == len(parts):
+        return text
+    return " ".join(p for p in kept if p) or text
+
+
 def format_docs(docs: list[dict]) -> str:
     return "".join(
         f"**Doc {i + 1}:**\n{json.dumps(d, ensure_ascii=False, indent=2)}\n"
@@ -572,6 +588,8 @@ def main():
                 facts.append(f if f else "NONE")
             else:
                 facts.append("NONE")
+        if not args.simpledeepsearcher_prompt:  # multi-hop extractions: repeated sentences dropped
+            facts = [dedup_sentences(f) if mh else f for f, (_q, _rr, _sq, _docs, mh) in zip(facts, items)]
         return facts
 
     def evaluate_states(states: list[dict]) -> list[tuple[bool, float]]:
