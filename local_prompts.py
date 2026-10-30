@@ -426,22 +426,50 @@ def get_multi_qa_no_planner_instruction():
             + _INSUFFICIENT_RETRY_NO_PLANNER_EXAMPLE)
 
 
+def get_multihop_extractor_instruction(question, recent_reasoning, search_query, documents):
+    return f"""You are an extraction assistant.
+
+Read the retrieved documents and extract only the facts relevant to the Current Search Query below -- judge relevance against the Current Search Query only, not against whether the information fully answers the original multi-hop Question (a document that resolves only the current hop is still relevant, even if it doesn't finish the Question).
+
+Rules:
+- Use only the retrieved documents.
+- Do not speculate or use outside knowledge.
+- Keep factual details as written in the documents.
+- Intermediate bridge facts (e.g., the identity of an entity that connects the question to a later retrieval step) are useful and should be extracted, even when they do not directly answer the original question.
+- If several candidates could each plausibly answer the search query, pick the one that most directly and specifically answers it as asked, not a more recent or more prominent one.
+- Output NONE only when the documents contain neither a direct answer nor any intermediate fact usable for the next reasoning step.
+
+Output format:
+- If the retrieved documents contain helpful information (direct or intermediate) for the current search query or recent reasoning, provide the information with `**Extracted Information**` as shown below.
+
+**Extracted Information**
+
+[Extracted information]
+
+- If the retrieved documents do not contain any helpful information (direct or intermediate), output the following:
+
+**Extracted Information**
+
+NONE
+
+Question: {question}
+Current Search Query: {search_query}
+Recent Reasoning: {recent_reasoning}
+Retrieved Documents: {documents}
+
+Now you should read the retrieved documents and find helpful information based on the current search query "{search_query}" and recent reasoning, including any intermediate facts that could support the next reasoning step.
+"""
+
+
 def get_extractor_instruction(question, recent_reasoning, search_query, documents, is_multi_hop=False, dataset_name=None):
     question = strip_mc_choices(question)
     if is_multi_hop:
-        candidate_rule = "- If several candidates could each plausibly answer the search query, pick the one that most directly and specifically answers it as asked, not a more recent or more prominent one."
-        hop_rules = ("- State the extracted information as complete sentences that name the entity and the relation asked about "
-                     "in the Current Search Query (e.g. \"Blind Shaft is a 2003 film.\"), never as a bare name, date, or number. "
-                     "If the documents give several relevant facts, keep all of them; do not compress them into one.\n"
-                     "- If no relevant fact is found, output NONE.")
-    else:
-        candidate_rule = """- If several candidates could each plausibly answer the search query: pick the one that most directly and specifically answers it as asked IF the search query itself already gives enough context to tell them apart; otherwise extract all of them together with whatever distinguishing detail (date, context, series, etc.) the document gives, instead of forcing a pick or collapsing them into one tidy sentence."""
-        hop_rules = """- If the ENTIRE answer is a single word, number, or short phrase AND there is exactly one relevant fact (nothing else relevant found), restate it as one complete sentence that directly answers the Current Search Query (e.g. "12" -> "12 avenues radiate from the Arc de Triomphe."), instead of outputting the bare word/phrase alone.
+        return get_multihop_extractor_instruction(question, recent_reasoning, search_query, documents)
+    candidate_rule = """- If several candidates could each plausibly answer the search query: pick the one that most directly and specifically answers it as asked IF the search query itself already gives enough context to tell them apart; otherwise extract all of them together with whatever distinguishing detail (date, context, series, etc.) the document gives, instead of forcing a pick or collapsing them into one tidy sentence."""
+    hop_rules = """- If the ENTIRE answer is a single word, number, or short phrase AND there is exactly one relevant fact (nothing else relevant found), restate it as one complete sentence that directly answers the Current Search Query (e.g. "12" -> "12 avenues radiate from the Arc de Triomphe."), instead of outputting the bare word/phrase alone.
 - If no relevant fact is found, output NONE."""
     extra_rules = "\n".join(r for r in (candidate_rule, hop_rules) if r)
-    # single-hop only; the multi-hop extractor prompt omits this line
-    concise_line = ("" if is_multi_hop else
-                    "Answer directly and concisely. Do not restate these rules or deliberate about them at length.\n\n")
+    concise_line = "Answer directly and concisely. Do not restate these rules or deliberate about them at length.\n\n"
     return f"""You are an extraction assistant. Read the retrieved documents and extract the facts relevant to the Current Search Query below -- judge relevance against the Current Search Query only, not against whether the information fully answers the original multi-hop Question (a document that resolves only the current hop is still relevant, even if it doesn't finish the Question).
 
 Rules:
