@@ -465,12 +465,12 @@ def get_extractor_instruction(question, recent_reasoning, search_query, document
     question = strip_mc_choices(question)
     if is_multi_hop:
         return get_multihop_extractor_instruction(question, recent_reasoning, search_query, documents)
-    candidate_rule = """- If several candidates could each plausibly answer the search query: pick the one that most directly and specifically answers it as asked IF the search query itself already gives enough context to tell them apart; otherwise extract all of them together with whatever distinguishing detail (date, context, series, etc.) the document gives, instead of forcing a pick or collapsing them into one tidy sentence."""
-    hop_rules = """- If the ENTIRE answer is a single word, number, or short phrase AND there is exactly one relevant fact (nothing else relevant found), restate it as one complete sentence that directly answers the Current Search Query (e.g. "12" -> "12 avenues radiate from the Arc de Triomphe."), instead of outputting the bare word/phrase alone.
+    candidate_rule = "- If several candidates could answer the search query and the query does not say which one is meant, list each with the detail that distinguishes it (date, context, etc.); otherwise give the one that answers it most directly."
+    hop_rules = """- State the answer as a complete sentence (e.g. "12 avenues radiate from the Arc de Triomphe."), not as a bare word, name, or number.
 - If no relevant fact is found, output NONE."""
     extra_rules = "\n".join(r for r in (candidate_rule, hop_rules) if r)
     concise_line = "Answer directly and concisely. Do not restate these rules or deliberate about them at length.\n\n"
-    return f"""You are an extraction assistant. Read the retrieved documents and extract the facts relevant to the Current Search Query below -- judge relevance against the Current Search Query only, not against whether the information fully answers the original multi-hop Question (a document that resolves only the current hop is still relevant, even if it doesn't finish the Question).
+    return f"""You are an extraction assistant. Read the retrieved documents and extract the facts relevant to the Current Search Query below -- judge relevance against the Current Search Query only, not against whether the information fully answers the original Question.
 
 Rules:
 - Use only the retrieved documents; do not infer, speculate, or use outside knowledge.
